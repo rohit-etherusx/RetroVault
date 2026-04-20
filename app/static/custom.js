@@ -12,6 +12,13 @@ function initEmulator() {
 
     gba.setLogger(function (level, error) {
         console.error(error);
+        try {
+            fetch('/client-log', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({event: 'gbajs_error', level: level, message: (error && error.message) ? error.message : String(error), stack: (error && error.stack) ? error.stack : null})
+            }).catch(()=>{});
+        } catch (e) {}
         gba.pause();
     });
 
@@ -19,6 +26,20 @@ function initEmulator() {
     const canvas = document.getElementById('screen');
     if (canvas) {
         gba.setCanvas(canvas);
+    }
+
+    // Load BIOS if available
+    try {
+        if (typeof biosBin !== 'undefined') {
+            gba.setBios(biosBin, false);
+            console.log('BIOS loaded');
+            showStatus('BIOS loaded');
+            try { fetch('/client-log', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({event:'bios_loaded'})}).catch(()=>{}); } catch(_){}
+        } else {
+            console.warn('BIOS not found');
+        }
+    } catch (e) {
+        console.error('Error loading BIOS', e);
     }
 
     // Set up controls
@@ -55,6 +76,8 @@ async function loadRomFromBackend() {
         const romData = await response.arrayBuffer();
         
         const result = gba.setRom(romData);
+        console.log('setRom result:', result);
+        try { fetch('/client-log', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({event:'setRom_result', result: !!result, romSize: romData.byteLength})}).catch(()=>{}); } catch(_){}
         if (!result) {
             throw new Error('Failed to load ROM into emulator');
         }
@@ -67,12 +90,28 @@ async function loadRomFromBackend() {
         // Start the game
         gba.runStable();
         showStatus('Playing!');
+        try { fetch('/client-log', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({event:'emulator_started'})}).catch(()=>{}); } catch(_){}
+        // notify server that emulator started
+        fetch('/client-log', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({event: 'emulator_started'})}).catch(()=>{});
         
     } catch (error) {
         console.error('Error loading ROM:', error);
         showStatus('Error: ' + error.message);
+        fetch('/client-log', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({event: 'load_error', message: error.message, stack: error.stack || null})}).catch(()=>{});
     }
 }
+
+// Send client-side errors to server for debugging
+window.addEventListener('error', function (e) {
+    try {
+        fetch('/client-log', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({event: 'error', message: e.message, filename: e.filename, lineno: e.lineno, colno: e.colno, stack: (e.error && e.error.stack) || null})});
+    } catch (_) {}
+});
+window.addEventListener('unhandledrejection', function (e) {
+    try {
+        fetch('/client-log', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({event: 'unhandledrejection', reason: (e && e.reason) ? (e.reason.message || String(e.reason)) : 'unknown'})});
+    } catch (_) {}
+});
 
 // Load save from backend
 async function loadSaveFromBackend() {
@@ -165,48 +204,7 @@ function showStatus(message) {
     }
 }
 
-// Keyboard controls
-document.addEventListener('keydown', function(e) {
-    if (!gba) return;
-    
-    const keyMap = {
-        'ArrowUp': 'UP',
-        'ArrowDown': 'DOWN',
-        'ArrowLeft': 'LEFT',
-        'ArrowRight': 'RIGHT',
-        'Enter': 'START',
-        'Shift': 'SELECT',
-        'KeyZ': 'A',
-        'KeyX': 'B',
-        'KeyA': 'L',
-        'KeyS': 'R'
-    };
-    
-    if (keyMap[e.code]) {
-        gba.keypad.keyDown(keyMap[e.code]);
-    }
-});
-
-document.addEventListener('keyup', function(e) {
-    if (!gba) return;
-    
-    const keyMap = {
-        'ArrowUp': 'UP',
-        'ArrowDown': 'DOWN',
-        'ArrowLeft': 'LEFT',
-        'ArrowRight': 'RIGHT',
-        'Enter': 'START',
-        'Shift': 'SELECT',
-        'KeyZ': 'A',
-        'KeyX': 'B',
-        'KeyA': 'L',
-        'KeyS': 'R'
-    };
-    
-    if (keyMap[e.code]) {
-        gba.keypad.keyUp(keyMap[e.code]);
-    }
-});
+// Keyboard handled by `gba.keypad.registerHandlers()` (native keydown/keyup listeners).
 
 // Auto-save on page unload
 window.addEventListener('beforeunload', function() {

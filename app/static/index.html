@@ -3,30 +3,60 @@
 <head>
 	<meta charset="UTF-8">
 	<title>RetroVault - GBA Emulator</title>
-	<link rel="stylesheet" href="resources/main.css">
-	<script src="js/util.js"></script>
-	<script src="js/core.js"></script>
-	<script src="js/arm.js"></script>
-	<script src="js/thumb.js"></script>
-	<script src="js/mmu.js"></script>
-	<script src="js/io.js"></script>
-	<script src="js/audio.js"></script>
-	<script src="js/video.js"></script>
-	<script src="js/video/proxy.js"></script>
-	<script src="js/video/software.js"></script>
-	<script src="js/irq.js"></script>
-	<script src="js/keypad.js"></script>
-	<script src="js/sio.js"></script>
-	<script src="js/savedata.js"></script>
-	<script src="js/gpio.js"></script>
-	<script src="js/gba.js"></script>
-	<script src="resources/xhr.js"></script>
-	<script src="resources/biosbin.js"></script>
-	<script src="custom.js"></script>
+	<script>
+		(function(){
+			function send(data){
+				try{ fetch('/client-log', {method:'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data)}).catch(()=>{}); }catch(e){}
+			}
+			// Wrap fetch to capture failed network requests
+			var _fetch = window.fetch;
+			if (_fetch) {
+				window.fetch = function(input, init) {
+					var url = (typeof input === 'string') ? input : (input && input.url) || 'unknown';
+					return _fetch.apply(this, arguments).catch(function(err){
+						send({event: 'fetch_failed', url: url, message: err && err.message ? err.message : String(err)});
+						throw err;
+					});
+				};
+			}
+			window.onerror = function(message, source, lineno, colno, error){
+				send({event: 'window_error', message: message, source: source, lineno: lineno, colno: colno, stack: error && error.stack});
+			};
+			window.onunhandledrejection = function(e){
+				var reason = (e && e.reason) ? (e.reason.message || String(e.reason)) : 'unknown';
+				send({event: 'unhandledrejection', reason: reason});
+			};
+			var _cl = console.log.bind(console);
+			var _ce = console.error.bind(console);
+			console.log = function(){ try{ send({event: 'console.log', args: Array.prototype.slice.call(arguments)}); }catch(_){}; _cl.apply(console, arguments); };
+			console.error = function(){ try{ send({event: 'console.error', args: Array.prototype.slice.call(arguments)}); }catch(_){}; _ce.apply(console, arguments); };
+			send({event: 'page_loaded'});
+		})();
+	</script>
+	<link rel="stylesheet" href="/static/resources/main.css">
+	<script src="/static/js/util.js"></script>
+	<script src="/static/js/core.js"></script>
+	<script src="/static/js/arm.js"></script>
+	<script src="/static/js/thumb.js"></script>
+	<script src="/static/js/mmu.js"></script>
+	<script src="/static/js/io.js"></script>
+	<script src="/static/js/audio.js"></script>
+	<script src="/static/js/video.js"></script>
+	<script src="/static/js/video/proxy.js"></script>
+	<script src="/static/js/video/software.js"></script>
+	<script src="/static/js/irq.js"></script>
+	<script src="/static/js/keypad.js"></script>
+	<script src="/static/js/sio.js"></script>
+	<script src="/static/js/savedata.js"></script>
+	<script src="/static/js/gpio.js"></script>
+	<script src="/static/js/gba.js"></script>
+	<script src="/static/resources/xhr.js"></script>
+	<script src="/static/resources/biosbin.js"></script>
+	<script src="/static/custom.js"></script>
 </head>
 <body>
 	<div id="game-container">
-		<canvas id="screen" width="480" height="320"></canvas>
+		<canvas id="screen" width="240" height="160"></canvas>
 	</div>
 	<div id="controls">
 		<button id="pause">PAUSE</button>
