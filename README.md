@@ -286,6 +286,6 @@ Now go forth and play.
 
 **Made with ☕, nostalgia, and way too much time on a Sunday afternoon**
 
-*Built with love by [Your Name]*
+*Built with love by Rohit/Etherusx*
 
 </div>
