@@ -1,5 +1,6 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 import shutil
 
@@ -8,10 +9,24 @@ app = FastAPI()
 BASE_DIR = Path(__file__).parent
 ROM_DIR = BASE_DIR / "roms"
 SAVE_DIR = BASE_DIR / "saves"
+STATIC_DIR = BASE_DIR / "static"
 
 # Ensure directories exist
 ROM_DIR.mkdir(parents=True, exist_ok=True)
 SAVE_DIR.mkdir(parents=True, exist_ok=True)
+STATIC_DIR.mkdir(parents=True, exist_ok=True)
+
+# Mount static files
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+
+@app.get("/")
+async def root():
+    # Serve the main index.html
+    index_file = STATIC_DIR / "index.html"
+    if index_file.is_file():
+        return FileResponse(index_file)
+    return {"message": "RetroVault GBA Emulator - Please add index.html to static/"}
 
 
 @app.get("/rom")
