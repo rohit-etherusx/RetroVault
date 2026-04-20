@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>RetroVault - GBA Emulator</title>
+	<link rel="stylesheet" href="resources/main.css">
+	<script src="js/util.js"></script>
+	<script src="js/core.js"></script>
+	<script src="js/arm.js"></script>
+	<script src="js/thumb.js"></script>
+	<script src="js/mmu.js"></script>
+	<script src="js/io.js"></script>
+	<script src="js/audio.js"></script>
+	<script src="js/video.js"></script>
+	<script src="js/video/proxy.js"></script>
+	<script src="js/video/software.js"></script>
+	<script src="js/irq.js"></script>
+	<script src="js/keypad.js"></script>
+	<script src="js/sio.js"></script>
+	<script src="js/savedata.js"></script>
+	<script src="js/gpio.js"></script>
+	<script src="js/gba.js"></script>
+	<script src="resources/xhr.js"></script>
+	<script src="resources/biosbin.js"></script>
+	<script src="custom.js"></script>
+</head>
+<body>
+	<div id="game-container">
+		<canvas id="screen" width="480" height="320"></canvas>
+	</div>
+	<div id="controls">
+		<button id="pause">PAUSE</button>
+		<button id="save">SAVE GAME</button>
+		<button id="reset">RESET</button>
+	</div>
+	<div id="status"></div>
+</body>
+</html>

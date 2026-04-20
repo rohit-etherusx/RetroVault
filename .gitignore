@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# FastAPI/Uvicorn
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# ROMs and Saves (keep these local only)
+*.gba
+*.sav
+
+# Docker
+.docker/
+
+# Environment
+.env
+
+
+# copilot - instructions 
+instructions.md
+dev_log.md
+objective.md
+plan.md
+task_progress.md
+understanding.md
